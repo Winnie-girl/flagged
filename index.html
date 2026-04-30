@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flagged. — Product Recall Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    button { font: inherit; cursor: pointer; background: none; border: none; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── TOKENS ── */
+    :root {
+      --bg:      #0D1117;
+      --surface: #161B22;
+      --surface2: #1C2128;
+      --border:  rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.12);
+      --green:   #3FB950;
+      --red:     #F85149;
+      --amber:   #D29922;
+      --text:    #E6EDF3;
+      --muted:   rgba(230,237,243,0.45);
+      --head:    'Space Grotesk', sans-serif;
+      --mono:    'JetBrains Mono', monospace;
+    }
+
+    /* ── BASE ── */
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--head);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── DOT GRID ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.09) 1px, transparent 1px);
+      background-size: 32px 32px;
+      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 20%, transparent 100%);
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 20%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LAYOUT ── */
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    .screen { padding: 0 0 80px; }
+    .screen-home { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 0; }
+
+    /* ── NAV ── */
+    .nav {
+      display: flex;
+      align-items: center;
+      padding: 22px 48px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-left { display: flex; align-items: center; gap: 20px; }
+    .logo {
+      font-family: var(--head);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(63,185,80,0.6);
+      display: inline-block;
+    }
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--green);
+      background: rgba(63,185,80,0.08);
+      border: 1px solid rgba(63,185,80,0.2);
+      border-radius: 100px;
+      padding: 4px 10px;
+      letter-spacing: 0.04em;
+    }
+    .live-pill-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      background: #238636;
+      color: #fff;
+      border-radius: 6px;
+      padding: 12px 24px;
+      font-family: var(--head);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
+      border: 1px solid rgba(63,185,80,0.25);
+    }
+    .btn-primary:hover { background: #2ea043; }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary.sm { padding: 8px 16px; font-size: 0.78rem; }
+
+    .btn-secondary {
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 11px 20px;
+      font-family: var(--head);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
+    .btn-secondary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-ghost {
+      color: var(--muted);
+      font-family: var(--head);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 0;
+      transition: color 0.15s;
+    }
+    .btn-ghost:hover { color: var(--text); }
+    .nav .btn-ghost { margin-left: auto; }
+
+    /* ── HOME HERO ── */
+    .hero-outer {
+      flex: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 72px 48px 80px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 60px;
+      align-items: center;
+    }
+
+    /* LEFT COLUMN */
+    .hero-content { max-width: 560px; }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .eyebrow-line {
+      width: 28px; height: 1px;
+      background: var(--green);
+    }
+    .eyebrow-text {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--green);
+    }
+
+    .headline {
+      font-family: var(--head);
+      font-size: clamp(2.8rem, 5.5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+      margin-bottom: 20px;
+    }
+    .hl-green { color: var(--green); }
+    .hl-dim   { color: rgba(230,237,243,0.28); }
+    .hl-red   { color: var(--red); }
+
+    .sub-headline {
+      font-family: var(--head);
+      font-size: 1rem;
+      font-weight: 400;
+      color: rgba(230,237,243,0.55);
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* SEARCH */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      display: flex;
+    }
+    .search-kbd {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 3px 7px;
+      pointer-events: none;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 14px 58px 14px 46px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus {
+      border-color: rgba(63,185,80,0.4);
+      box-shadow: 0 0 0 3px rgba(63,185,80,0.08);
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    .search-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+    .asin-reveal {
+      background: rgba(210,153,34,0.06);
+      border: 1px solid rgba(210,153,34,0.2);
+      border-radius: 8px;
+      padding: 14px 18px;
+      text-align: left;
+      animation: fadeUp 0.22s ease-out;
+    }
+    .asin-reveal label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      margin-bottom: 10px;
+    }
+    .asin-reveal input { background: transparent; border: none; padding: 6px 0; font-size: 0.875rem; }
+    .asin-reveal input:focus { border: none; box-shadow: none; }
+
+    .hidden { display: none !important; }
+
+    /* PILLS */
+    .pills {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 48px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 13px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .pill:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: rgba(230,237,243,0.4);
+      flex-wrap: nowrap;
+    }
+    .stats-row span { white-space: nowrap; }
+    .stats-row-sep {
+      margin: 0 12px;
+      opacity: 0.3;
+    }
+
+    /* ── FLOATING CARDS (right column) ── */
+    .hero-cards {
+      position: relative;
+      height: 460px;
+      flex-shrink: 0;
+    }
+
+    .demo-card {
+      position: absolute;
+      width: 240px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 16px;
+      transition: transform 0.2s;
+    }
+    .demo-card:hover { transform: translateY(-3px) !important; }
+
+    .dc-red   { top: 0;    left: 0;   transform: rotate(-2deg);   box-shadow: 0 8px 32px rgba(248,81,73,0.18),  0 0 0 1px rgba(248,81,73,0.12); }
+    .dc-green { top: 160px; right: 0;  transform: rotate(1.5deg);  box-shadow: 0 8px 32px rgba(63,185,80,0.18),  0 0 0 1px rgba(63,185,80,0.12); }
+    .dc-amber { bottom: 0; left: 30px; transform: rotate(1deg);   box-shadow: 0 8px 32px rgba(210,153,34,0.18), 0 0 0 1px rgba(210,153,34,0.12); }
+
+    .dc-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .dc-badge {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dc-badge-red   { background: var(--red);   box-shadow: 0 0 6px rgba(248,81,73,0.5); }
+    .dc-badge-green { background: var(--green); box-shadow: 0 0 6px rgba(63,185,80,0.5); }
+    .dc-badge-amber { background: var(--amber); box-shadow: 0 0 6px rgba(210,153,34,0.5); }
+
+    .dc-status {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .dc-status-red   { color: var(--red); }
+    .dc-status-green { color: var(--green); }
+    .dc-status-amber { color: var(--amber); }
+
+    .dc-ts {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .dc-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 10px;
+    }
+
+    .dc-name {
+      font-family: var(--head);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .dc-detail {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .dc-bar-wrap {
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      height: 3px;
+      overflow: hidden;
+    }
+    .dc-bar {
+      height: 100%;
+      border-radius: 100px;
+    }
+    .dc-bar-red   { background: var(--red); }
+    .dc-bar-green { background: var(--green); }
+    .dc-bar-amber { background: var(--amber); }
+
+    /* SVG connector lines */
+    .card-connectors {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* ── LOADING ── */
+    .screen-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+    }
+    .loading-inner { text-align: center; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 36px;
+    }
+
+    .steps { display: inline-flex; flex-direction: column; gap: 4px; text-align: left; }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding: 8px 0;
+      transition: color 0.3s;
+    }
+    .step.active { color: var(--text); }
+    .step.done   { color: var(--green); }
+    .step-icon   { width: 18px; text-align: center; }
+
+    /* ── RESULT ── */
+    .result-outer {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 48px 80px;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+      animation: fadeUp 0.35s ease-out;
+    }
+
+    .verdict-banner {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .verdict-banner.v-clear   { background: rgba(63,185,80,0.07);  border-bottom: 1px solid rgba(63,185,80,0.14); }
+    .verdict-banner.v-caution { background: rgba(210,153,34,0.07); border-bottom: 1px solid rgba(210,153,34,0.14); }
+    .verdict-banner.v-recall  { background: rgba(248,81,73,0.07);  border-bottom: 1px solid rgba(248,81,73,0.14); }
+
+    .verdict-badge {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 5px 11px;
+      border-radius: 4px;
+    }
+    .verdict-badge.v-clear   { background: rgba(63,185,80,0.12);  color: var(--green); border: 1px solid rgba(63,185,80,0.22); }
+    .verdict-badge.v-caution { background: rgba(210,153,34,0.12); color: var(--amber); border: 1px solid rgba(210,153,34,0.22); }
+    .verdict-badge.v-recall  { background: rgba(248,81,73,0.12);  color: var(--red);   border: 1px solid rgba(248,81,73,0.22); }
+
+    .confidence {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .result-body { padding: 24px; }
+
+    .verdict-headline {
+      font-family: var(--head);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .checked-sources {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: rgba(230,237,243,0.5);
+      line-height: 1.6;
+      margin-bottom: 22px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.025);
+      border-radius: 8px;
+      border-left: 2px solid var(--border2);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .detail-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .detail-item-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .detail-item-value {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      line-height: 1.45;
+    }
+
+    .action-steps { margin-bottom: 22px; }
+    .action-steps ol { list-style: none; counter-reset: step-ctr; }
+    .action-steps li {
+      counter-increment: step-ctr;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+    .action-steps li:last-child { border-bottom: none; }
+    .action-steps li::before {
+      content: counter(step-ctr);
+      flex-shrink: 0;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    .v-recall .action-steps li::before {
+      background: rgba(248,81,73,0.12);
+      border: 1px solid rgba(248,81,73,0.25);
+      color: var(--red);
+    }
+    .v-caution-card .action-steps li::before {
+      background: rgba(210,153,34,0.12);
+      border: 1px solid rgba(210,153,34,0.25);
+      color: var(--amber);
+    }
+
+    .official-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 8px 14px;
+      margin-bottom: 22px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .official-link:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .result-actions .btn-primary { width: 100%; text-align: center; }
+
+    .disclaimer {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: rgba(230,237,243,0.25);
+      line-height: 1.55;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .copy-done { color: var(--green) !important; border-color: rgba(63,185,80,0.3) !important; }
+
+    /* ── DOWNLOAD BUTTON HOVER (verdict-aware) ── */
+    .v-recall     .btn-download:hover { border-color: #F85149; }
+    .v-caution-card .btn-download:hover { border-color: #D29922; }
+    .result-card:not(.v-recall):not(.v-caution-card) .btn-download:hover { border-color: #3FB950; }
+
+    /* ── PRINT HEADER (screen: hidden) ── */
+    .print-header { display: none; }
+
+    /* ── PRINT STYLESHEET ── */
+    @media print {
+      @page { size: A4; margin: 15mm; }
+
+      body { background: #FFFFFF !important; color: #111111 !important; }
+
+      /* hide chrome */
+      .inner-nav, nav, .alert-banner, .result-actions,
+      .official-link, .checked-sources { display: none !important; }
+
+      /* reset layout containers */
+      .result-outer { padding: 0 !important; max-width: 100% !important; }
+      .result-card  { background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+      .result-body  { padding: 0 !important; }
+
+      /* print header */
+      .print-header {
+        display: block !important;
+        margin-bottom: 20px;
+      }
+      .print-header-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 8px;
+      }
+      .print-header-brand {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #111111;
+      }
+      .print-header-date {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: #888888;
+      }
+      .print-header-rule {
+        height: 2px;
+        background: #3FB950;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* forced color on verdict banner strip */
+      .verdict-banner.v-recall  { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(248,81,73,0.12) !important; }
+      .verdict-banner.v-caution { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(210,153,34,0.12) !important; }
+      .verdict-banner.v-clear   { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(63,185,80,0.12) !important; }
+
+      /* forced color on verdict badge */
+      .verdict-badge.v-recall  { background-color: rgba(248,81,73,0.12) !important; color: #F85149 !important; border: 1px solid rgba(248,81,73,0.22) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .verdict-badge.v-caution { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(210,153,34,0.18) !important; color: #D29922 !important; border: 1px solid rgba(210,153,34,0.4) !important; }
+      .verdict-badge.v-clear   { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(63,185,80,0.18) !important; color: #3FB950 !important; border: 1px solid rgba(63,185,80,0.4) !important; }
+
+      /* forced color on action step number circles */
+      .v-recall .action-steps li::before { background-color: rgba(248,81,73,0.12) !important; color: #F85149 !important; border: 1px solid rgba(248,81,73,0.25) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .v-caution-card .action-steps li::before { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(210,153,34,0.18) !important; color: #D29922 !important; border: 1px solid rgba(210,153,34,0.4) !important; }
+
+      /* print typography */
+      .verdict-headline { font-size: 13px !important; }
+      .result-body, .detail-item-value { font-size: 10px !important; }
+      .action-steps li { font-size: 9px !important; }
+      .section-label, .detail-item-label { font-size: 9px !important; }
+      .detail-item { font-size: 9px !important; }
+      .disclaimer { font-size: 9px !important; color: #888888 !important; border-top: 1px solid #ddd !important; }
+
+      /* collapse all section spacing */
+      .verdict-banner { margin-bottom: 8px !important; }
+      .verdict-headline { margin-bottom: 8px !important; }
+      .checked-sources  { margin-bottom: 8px !important; }
+      .detail-grid      { gap: 6px !important; margin-bottom: 8px !important; }
+      .detail-item      { padding: 6px 8px !important; }
+      .action-steps     { margin-bottom: 8px !important; }
+      .action-steps li  { padding: 5px 0 !important; }
+      .section-label    { margin-bottom: 4px !important; }
+      .print-header     { margin-bottom: 12px !important; }
+
+      /* print footer — fixed repeats on every page */
+      body::after {
+        content: 'Generated by Flagged \00B7 flagged-dun.vercel.app \00B7 Always verify directly at CPSC.gov and FDA.gov \00B7 Not legal advice';
+        display: block;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: #999999;
+        text-align: center;
+        padding-bottom: 6mm;
+      }
+    }
+
+    /* ── WATCHLIST ── */
+    .wl-outer {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 48px 80px;
+    }
+
+    .wl-empty {
+      text-align: center;
+      padding: 64px 20px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .wl-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      animation: fadeUp 0.3s ease-out;
+      transition: border-color 0.15s;
+    }
+    .wl-item:hover { border-color: var(--border2); }
+
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-clear        { background: var(--green); box-shadow: 0 0 6px rgba(63,185,80,0.4); }
+    .dot-caution      { background: var(--amber); box-shadow: 0 0 6px rgba(210,153,34,0.4); }
+    .dot-recall_found { background: var(--red);   box-shadow: 0 0 6px rgba(248,81,73,0.4); }
+    .dot-pending      { background: var(--muted); animation: pulse 1.4s ease-in-out infinite; }
+
+    .wl-info { flex: 1; min-width: 0; }
+    .wl-query {
+      font-family: var(--head);
+      font-weight: 600;
+      font-size: 0.86rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .wl-meta { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); }
+
+    .btn-remove { color: var(--muted); font-size: 0.85rem; padding: 4px 6px; transition: color 0.15s; flex-shrink: 0; }
+    .btn-remove:hover { color: var(--red); }
+
+    /* ── ERROR ── */
+    .error-box {
+      max-width: 680px;
+      margin: 0 auto 0;
+      background: rgba(248,81,73,0.07);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: rgba(248,130,120,0.9);
+      line-height: 1.5;
+      animation: fadeUp 0.3s ease-out;
+    }
+    /* error placed before result-outer, needs top padding */
+    .screen-home .error-box {
+      max-width: 1200px;
+      margin: 24px 48px 0;
+    }
+
+    /* ── INNER NAV (non-home screens) ── */
+    .inner-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 48px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+
+    /* ── ALERT BANNER ── */
+    .alert-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.4s ease-out 0.1s both;
+    }
+    .alert-banner-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .alert-left { display: flex; flex-direction: column; gap: 4px; }
+    .alert-title-row { display: flex; align-items: center; gap: 8px; }
+    .alert-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 7px rgba(63,185,80,0.6);
+      flex-shrink: 0;
+    }
+    .alert-title {
+      font-family: var(--head);
+      font-size: 13px;
+      color: rgba(230,237,243,0.7);
+      line-height: 1.4;
+    }
+    .alert-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(230,237,243,0.35);
+      padding-left: 15px;
+    }
+    .alert-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .alert-email-input {
+      background: #0D1117;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 8px 12px;
+      height: 36px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      flex: 1;
+      min-width: 0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .alert-email-input:focus { border-color: rgba(63,185,80,0.4); }
+    .alert-email-input::placeholder { color: rgba(230,237,243,0.3); }
+    .alert-btn {
+      background: #238636;
+      color: #fff;
+      border: 1px solid rgba(63,185,80,0.25);
+      border-radius: 6px;
+      padding: 8px 16px;
+      height: 36px;
+      font-family: var(--head);
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .alert-btn:hover { background: #2ea043; }
+    .alert-success {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .alert-success-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(63,185,80,0.12);
+      border: 1px solid rgba(63,185,80,0.25);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .alert-success-text {
+      font-family: var(--head);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: rgba(230,237,243,0.75);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin      { to { transform: rotate(360deg); } }
+    @keyframes pulse     { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    /* ── MOBILE ── */
+    @media (max-width: 640px) {
+      .alert-right { flex-direction: column; }
+      .alert-btn { width: 100%; }
+    }
+
+    @media (max-width: 768px) {
+      .nav, .inner-nav { padding: 18px 20px; }
+      .hero-outer {
+        grid-template-columns: 1fr;
+        padding: 40px 20px 60px;
+        gap: 0;
+      }
+      .hero-cards { display: none; }
+      .result-outer, .wl-outer { padding: 28px 20px 60px; }
+      .screen-home .error-box { margin: 16px 20px 0; }
+    }
+
+    @media (max-width: 480px) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .result-actions { flex-direction: column; }
+      .result-actions .btn-secondary,
+      .result-actions .btn-primary { width: 100%; text-align: center; }
+      .verdict-banner { flex-direction: column; align-items: flex-start; }
+      .headline { font-size: 2.6rem; }
+      .stats-row { font-size: 0.65rem; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ── STATE ── */
+let currentVerdict  = null;
+let currentQuery    = '';
+let currentName     = '';
+let watchlist       = JSON.parse(localStorage.getItem('flagged_watchlist') || '[]');
+
+const ASIN_RE = /^(B[A-Z0-9]{9}|\d{10})$/i;
+
+/* ── UTILS ── */
+const delay = ms => new Promise(r => setTimeout(r, ms));
+const saveWL = () => localStorage.setItem('flagged_watchlist', JSON.stringify(watchlist));
+const isASIN = s => ASIN_RE.test(s.trim());
+
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function safeUrl(str) {
+  const s = String(str || '').trim();
+  return (s.startsWith('https://') || s.startsWith('http://')) ? esc(s) : '#';
+}
+function timeAgo(iso) {
+  if (!iso) return 'never';
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (m < 1)   return 'just now';
+  if (m < 60)  return `${m}m ago`;
+  if (m < 1440) return `${Math.floor(m/60)}h ago`;
+  return `${Math.floor(m/1440)}d ago`;
+}
+
+/* ── SERVER CALL ── */
+async function checkProduct(query, name) {
+  const res = await fetch('/api/recall', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, name })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Server error ${res.status}`);
+  }
+  return res.json();
+}
+
+/* ── LOADING STEPS ── */
+function setStep(n, state) {
+  for (let i = 1; i <= 3; i++) {
+    const el   = document.getElementById(`step-${i}`);
+    const icon = el?.querySelector('.step-icon');
+    if (!el) continue;
+    el.className = 'step';
+    if (i < n)      { el.classList.add('done');              icon.textContent = '✓'; }
+    else if (i === n) { el.classList.add(state === 'done' ? 'done' : 'active'); icon.textContent = state === 'done' ? '✓' : '◉'; }
+    else             { icon.textContent = '○'; }
+  }
+}
+
+/* ── MAIN SEARCH FLOW ── */
+async function runSearch(query, name) {
+  showScreen('loading');
+  setStep(1, 'active');
+
+  const serverCall = checkProduct(query, name || query);
+
+  const animDone = (async () => {
+    await delay(800); setStep(2, 'active');
+    await delay(800); setStep(3, 'active');
+  })();
+
+  try {
+    const [verdict] = await Promise.all([serverCall, animDone]);
+
+    setStep(3, 'done');
+    await delay(380);
+
+    currentVerdict = verdict;
+    currentQuery   = query;
+    currentName    = name || query;
+
+    showScreen('result', { verdict, query, name: name || query });
+
+  } catch(e) {
+    showScreen('home');
+    const app = document.getElementById('app');
+    const sc  = app.querySelector('.screen');
+    const box = document.createElement('div');
+    box.className = 'error-box';
+    box.textContent = e.message || 'Something went wrong. Please try again.';
+    if (sc) sc.prepend(box);
+  }
+}
+
+function handleSearch() {
+  const q    = document.getElementById('search-input')?.value?.trim();
+  if (!q) return;
+
+  if (isASIN(q)) {
+    const nameEl = document.getElementById('asin-name-input');
+    const name   = nameEl?.value?.trim();
+    if (!name) {
+      nameEl?.focus();
+      nameEl?.setAttribute('style', 'outline: 1px solid var(--amber)');
+      return;
+    }
+    runSearch(q, name);
+  } else {
+    runSearch(q, '');
+  }
+}
+
+function fillSearch(term) {
+  showScreen('home');
+  requestAnimationFrame(() => {
+    const el = document.getElementById('search-input');
+    if (el) { el.value = term; el.dispatchEvent(new Event('input')); el.focus(); }
+  });
+}
+
+/* ── SCREEN ROUTER ── */
+function showScreen(name, data) {
+  const app = document.getElementById('app');
+  switch (name) {
+    case 'home':      app.innerHTML = renderHome();            bindHome();      break;
+    case 'loading':   app.innerHTML = renderLoading();                          break;
+    case 'result':    app.innerHTML = renderResult(data);      bindResult(data); break;
+    case 'watchlist': app.innerHTML = renderWatchlist();       bindWatchlist(); break;
+  }
+}
+
+/* ── RENDERERS ── */
+function renderHome() {
+  return `
+<div class="screen screen-home">
+  <nav class="nav">
+    <div class="nav-left">
+      <span class="logo"><span class="logo-dot"></span>Flagged.</span>
+      <span class="live-pill"><span class="live-pill-dot"></span>3 databases live</span>
+    </div>
+    <button class="btn-ghost" onclick="showScreen('watchlist')">Watchlist →</button>
+  </nav>
+  <div class="hero-outer">
+    <div class="hero-content">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Recall intelligence</span>
+      </div>
+      <h1 class="headline">Know before your<br><span class="hl-green">store</span> <span class="hl-dim">pays for it.</span></h1>
+      <p class="sub-headline">Real-time recall monitoring across CPSC &amp; FDA.<br>One search between you and an account <span class="hl-red">suspension.</span></p>
+      <div class="search-box">
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 10L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <input type="text" id="search-input" placeholder="Product name or ASIN…" autocomplete="off" spellcheck="false">
+          <span class="search-kbd">Enter ↵</span>
+        </div>
+        <div id="asin-reveal" class="asin-reveal hidden">
+          <label>Product name — required for ASIN lookup</label>
+          <input type="text" id="asin-name-input" placeholder="e.g. Instant Pot Duo 7-in-1">
+        </div>
+        <button class="btn-primary" id="check-btn" style="width:100%;padding:14px">Run recall check</button>
+      </div>
+      <div class="pills">
+        <span>Try:</span>
+        <button class="pill" onclick="fillSearch('Instant Pot')">Instant Pot</button>
+        <button class="pill" onclick="fillSearch('Peloton Tread+')">Peloton Tread+</button>
+        <button class="pill" onclick="fillSearch('Keurig')">Keurig</button>
+      </div>
+      <div class="stats-row">
+        <span>7M+ sellers at risk</span>
+        <span class="stats-row-sep">·</span>
+        <span>3,247 active recalls</span>
+        <span class="stats-row-sep">·</span>
+        <span>3 DBs monitored live</span>
+      </div>
+    </div>
+
+    <div class="hero-cards" aria-hidden="true">
+      <svg class="card-connectors" viewBox="0 0 420 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M120 60 Q200 140 240 120" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="4 4"/>
+        <path d="M240 180 Q200 260 150 280" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="4 4"/>
+      </svg>
+
+      <div class="demo-card dc-red">
+        <div class="dc-header">
+          <div class="dc-badge dc-badge-red"></div>
+          <span class="dc-status dc-status-red">Recall found</span>
+          <span class="dc-ts">2m ago</span>
+        </div>
+        <div class="dc-divider"></div>
+        <div class="dc-name">Peloton Tread+</div>
+        <div class="dc-detail">CPSC · Child entrapment hazard<br>Recall #22-092</div>
+        <div class="dc-bar-wrap"><div class="dc-bar dc-bar-red" style="width:94%"></div></div>
+      </div>
+
+      <div class="demo-card dc-green">
+        <div class="dc-header">
+          <div class="dc-badge dc-badge-green"></div>
+          <span class="dc-status dc-status-green">Clear</span>
+          <span class="dc-ts">5m ago</span>
+        </div>
+        <div class="dc-divider"></div>
+        <div class="dc-name">Instant Pot Duo 7-in-1</div>
+        <div class="dc-detail">CPSC · FDA · No active recalls<br>Last checked today</div>
+        <div class="dc-bar-wrap"><div class="dc-bar dc-bar-green" style="width:97%"></div></div>
+      </div>
+
+      <div class="demo-card dc-amber">
+        <div class="dc-header">
+          <div class="dc-badge dc-badge-amber"></div>
+          <span class="dc-status dc-status-amber">Caution</span>
+          <span class="dc-ts">12m ago</span>
+        </div>
+        <div class="dc-divider"></div>
+        <div class="dc-name">Keurig K-Classic</div>
+        <div class="dc-detail">Partial match · Verify model<br>FDA enforcement note</div>
+        <div class="dc-bar-wrap"><div class="dc-bar dc-bar-amber" style="width:61%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function bindHome() {
+  const input   = document.getElementById('search-input');
+  const reveal  = document.getElementById('asin-reveal');
+  const checkBtn = document.getElementById('check-btn');
+  const nameIn  = document.getElementById('asin-name-input');
+
+  input?.addEventListener('input', () => {
+    reveal?.classList.toggle('hidden', !isASIN(input.value.trim()));
+  });
+  input?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+  nameIn?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+  checkBtn?.addEventListener('click', handleSearch);
+}
+
+function renderLoading() {
+  return `
+<div class="screen screen-loading">
+  <div class="loading-inner">
+    <div class="spinner"></div>
+    <div class="steps">
+      <div class="step active" id="step-1"><span class="step-icon">◉</span><span>Checking CPSC database…</span></div>
+      <div class="step"        id="step-2"><span class="step-icon">○</span><span>Checking FDA database…</span></div>
+      <div class="step"        id="step-3"><span class="step-icon">○</span><span>Analysing with AI…</span></div>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderResult({ verdict, query, name }) {
+  const printDate = new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const s        = verdict.status || 'clear';
+  const isBad    = s === 'recall_found' || s === 'caution';
+  const vKey     = s === 'recall_found' ? 'recall' : s;
+  const cardCls  = s === 'recall_found' ? 'v-recall' : s === 'caution' ? 'v-caution-card' : '';
+  const badge    = s === 'clear' ? '✓ CLEAR' : s === 'caution' ? '⚠ CAUTION — POSSIBLE MATCH' : '✕ RECALL FOUND';
+  const d        = verdict.recall_details || {};
+
+  const detailsHTML = isBad && (d.date || d.reason || d.affected_products || d.hazard) ? `
+    <p class="section-label" style="margin-bottom:10px">Recall Details</p>
+    <div class="detail-grid" style="margin-bottom:22px">
+      ${d.date             ? `<div class="detail-item"><div class="detail-item-label">Date</div><div class="detail-item-value">${esc(d.date)}</div></div>` : ''}
+      ${d.hazard           ? `<div class="detail-item"><div class="detail-item-label">Hazard</div><div class="detail-item-value">${esc(d.hazard)}</div></div>` : ''}
+      ${d.reason           ? `<div class="detail-item"><div class="detail-item-label">Reason</div><div class="detail-item-value">${esc(d.reason)}</div></div>` : ''}
+      ${d.affected_products? `<div class="detail-item"><div class="detail-item-label">Affected Products</div><div class="detail-item-value">${esc(d.affected_products)}</div></div>` : ''}
+    </div>` : '';
+
+  const stepsHTML = isBad && verdict.action_steps?.length ? `
+    <div class="action-steps">
+      <p class="section-label">Action Steps</p>
+      <ol>${verdict.action_steps.map(st => `<li>${esc(st)}</li>`).join('')}</ol>
+    </div>` : '';
+
+  const linkHTML = verdict.official_url ? `
+    <a class="official-link" href="${safeUrl(verdict.official_url)}" target="_blank" rel="noopener noreferrer">
+      ↗ View official recall notice
+    </a><br>` : '';
+
+  const copyBtn = isBad && verdict.action_steps?.length
+    ? `<button class="btn-secondary" id="copy-btn">Copy action steps</button>` : '';
+
+  return `
+<div class="screen screen-result">
+  <nav class="inner-nav">
+    <button class="btn-ghost" onclick="showScreen('home')">← Check another</button>
+    <span class="logo"><span class="logo-dot"></span>Flagged.</span>
+    <button class="btn-ghost" onclick="showScreen('watchlist')">Watchlist</button>
+  </nav>
+  <div class="result-outer">
+    <div class="print-header">
+      <div class="print-header-inner">
+        <span class="print-header-brand">Flagged.</span>
+        <span class="print-header-date">Report generated: ${printDate}</span>
+      </div>
+      <div class="print-header-rule"></div>
+    </div>
+    <div class="result-card ${cardCls}">
+      <div class="verdict-banner v-${vKey}">
+        <span class="verdict-badge v-${vKey}">${badge}</span>
+        <span class="confidence">${verdict.confidence ?? '—'}% confidence</span>
+      </div>
+      <div class="result-body">
+        <h2 class="verdict-headline">${esc(verdict.headline)}</h2>
+        <div class="alert-banner" id="alert-banner">
+          <div class="alert-banner-inner">
+            <div class="alert-left">
+              <div class="alert-title-row">
+                <span class="alert-dot"></span>
+                <span class="alert-title">Get notified if this product's recall status changes.</span>
+              </div>
+              <div class="alert-sub">Free during beta · No credit card required</div>
+            </div>
+            <div class="alert-right">
+              <input type="email" id="alert-email" class="alert-email-input" placeholder="your@email.com" onkeydown="if(event.key==='Enter')submitAlert()">
+              <button class="alert-btn" onclick="submitAlert()">Notify me</button>
+            </div>
+          </div>
+        </div>
+        <p class="section-label">Databases checked</p>
+        <div class="checked-sources">Analysed <strong>${esc(name)}</strong> against CPSC SaferProducts, FDA Food Enforcement, and FDA Device Enforcement databases.</div>
+        ${detailsHTML}
+        ${stepsHTML}
+        ${linkHTML}
+        <div class="result-actions">
+          <button class="btn-secondary" onclick="showScreen('home')">Check another</button>
+          ${copyBtn}
+          <button class="btn-secondary btn-download" onclick="window.print()">↓ Download Report</button>
+          <button class="btn-primary" id="wl-btn">+ Add to watchlist</button>
+        </div>
+      </div>
+      <p class="disclaimer">Flagged monitors public government databases. Always verify directly at CPSC.gov and FDA.gov. Not legal advice.</p>
+    </div>
+  </div>
+</div>`;
+}
+
+function bindResult({ verdict, query, name }) {
+  document.getElementById('copy-btn')?.addEventListener('click', function() {
+    const steps = (verdict.action_steps || []).map((s,i) => `${i+1}. ${s}`).join('\n');
+    navigator.clipboard.writeText(steps).then(() => {
+      this.textContent = '✓ Copied';
+      this.classList.add('copy-done');
+      setTimeout(() => { this.textContent = 'Copy action steps'; this.classList.remove('copy-done'); }, 2200);
+    });
+  });
+
+  document.getElementById('wl-btn')?.addEventListener('click', function() {
+    addToWL(query, name, verdict);
+    this.textContent = '✓ Added';
+    this.disabled = true;
+  });
+}
+
+/* ── WATCHLIST ── */
+function addToWL(query, name, verdict) {
+  const idx = watchlist.findIndex(w => w.query === query);
+  const entry = { query, name: name || query, status: verdict.status, checkedAt: new Date().toISOString(), verdict };
+  if (idx >= 0) watchlist[idx] = entry; else watchlist.push(entry);
+  saveWL();
+}
+
+function removeWL(idx) {
+  watchlist.splice(idx, 1);
+  saveWL();
+  showScreen('watchlist');
+}
+
+function dotClass(status) {
+  const map = { clear: 'dot-clear', caution: 'dot-caution', recall_found: 'dot-recall_found' };
+  return map[status] || 'dot-pending';
+}
+function statusLabel(status) {
+  return status === 'recall_found' ? 'Recall found' : status === 'caution' ? 'Caution' : 'Clear';
+}
+
+function renderWatchlist() {
+  const items = watchlist.map((item, i) => `
+<div class="wl-item" id="wl-${i}">
+  <div class="status-dot ${dotClass(item.status)}" id="dot-${i}"></div>
+  <div class="wl-info">
+    <div class="wl-query">${esc(item.name)}</div>
+    <div class="wl-meta" id="meta-${i}">${statusLabel(item.status)} · ${timeAgo(item.checkedAt)}</div>
+  </div>
+  <button class="btn-remove" onclick="removeWL(${i})" title="Remove">✕</button>
+</div>`).join('');
+
+  return `
+<div class="screen screen-watchlist">
+  <nav class="inner-nav">
+    <button class="btn-ghost" onclick="showScreen('home')">← Back</button>
+    <span class="logo"><span class="logo-dot"></span>Flagged.</span>
+    ${watchlist.length ? `<button class="btn-primary sm" id="check-all-btn">Check all</button>` : '<span></span>'}
+  </nav>
+  <div class="wl-outer">
+    ${watchlist.length
+      ? `<div id="wl-list">${items}</div>`
+      : `<div class="wl-empty">No products saved yet.<br>Search for a product and tap "+ Add to watchlist".</div>`
+    }
+  </div>
+</div>`;
+}
+
+function bindWatchlist() {
+  document.getElementById('check-all-btn')?.addEventListener('click', checkAll);
+}
+
+async function checkAll() {
+  const btn = document.getElementById('check-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+
+  watchlist.forEach((_, i) => {
+    const dot = document.getElementById(`dot-${i}`);
+    if (dot) dot.className = 'status-dot dot-pending';
+  });
+
+  const items = [...watchlist];
+  for (let b = 0; b < items.length; b += 3) {
+    if (b > 0) await delay(500);
+    await Promise.all(
+      items.slice(b, b + 3).map(async (item, li) => {
+        const gi = b + li;
+        try {
+          const q = item.query;
+          const n = item.name !== q ? item.name : '';
+          const verdict = await checkProduct(q, n);
+          watchlist[gi] = { ...item, status: verdict.status, checkedAt: new Date().toISOString(), verdict };
+
+          const dot  = document.getElementById(`dot-${gi}`);
+          const meta = document.getElementById(`meta-${gi}`);
+          if (dot)  dot.className = `status-dot ${dotClass(verdict.status)}`;
+          if (meta) meta.textContent = `${statusLabel(verdict.status)} · just now`;
+        } catch {
+          const dot = document.getElementById(`dot-${gi}`);
+          if (dot) { dot.className = 'status-dot'; dot.style.background = 'var(--muted)'; }
+        }
+      })
+    );
+  }
+
+  saveWL();
+  if (btn) { btn.disabled = false; btn.textContent = 'Check all'; }
+}
+
+/* ── ALERT SUBMISSION ── */
+function submitAlert() {
+  const emailInput = document.getElementById('alert-email');
+  const email = (emailInput?.value || '').trim();
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRe.test(email)) {
+    emailInput.style.borderColor = '#F85149';
+    setTimeout(() => { emailInput.style.borderColor = ''; }, 1400);
+    return;
+  }
+
+  const alerts = JSON.parse(localStorage.getItem('flagged_alerts') || '[]');
+  alerts.push({ email, product: currentName, query: currentQuery, savedAt: new Date().toISOString() });
+  localStorage.setItem('flagged_alerts', JSON.stringify(alerts));
+
+  const banner = document.getElementById('alert-banner');
+  if (banner) {
+    banner.innerHTML = `
+      <div class="alert-success">
+        <span class="alert-success-icon">✓</span>
+        <span class="alert-success-text">You'll be alerted before your store pays for it.</span>
+      </div>`;
+  }
+}
+
+/* ── INIT ── */
+showScreen('home');
+</script>
+</body>
+</html>
