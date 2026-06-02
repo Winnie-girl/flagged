@@ -529,6 +529,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 22px;
+      align-items: start;
     }
     .detail-item {
       background: rgba(255,255,255,0.03);
@@ -623,6 +624,7 @@
 
     /* ── PRINT HEADER (screen: hidden) ── */
     .print-header { display: none; }
+    .print-next-steps { display: none; }
 
     /* ── PRINT STYLESHEET ── */
     @media print {
@@ -635,73 +637,65 @@
       .official-link, .checked-sources { display: none !important; }
 
       /* reset layout containers */
-      .result-outer { padding: 0 !important; max-width: 100% !important; }
+      .result-outer { padding: 0 !important; max-width: 100% !important; margin-bottom: 0 !important; padding-bottom: 0 !important; }
       .result-card  { background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
       .result-body  { padding: 0 !important; }
 
-      /* print header */
-      .print-header {
-        display: block !important;
-        margin-bottom: 20px;
+      /* ── HEADER ── */
+      .print-header { display: block !important; margin-bottom: 16px !important; }
+      .print-header-inner { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+      .print-header-brand { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; color: #000000; }
+      .print-header-date  { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #444444; }
+      .print-header-rule  { height: 3px; background: #3FB950; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      /* ── BADGE COLOR FORCE ── */
+      div.verdict-badge, span.verdict-badge { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+
+      /* ── VERDICT BANNER ── */
+      .verdict-banner { display: flex !important; align-items: center !important; gap: 12px !important; background: transparent !important; border: none !important; padding: 12px 0 !important; margin-bottom: 12px !important; }
+
+      /* ── VERDICT BADGE ── */
+      .verdict-badge.v-recall {
+        background: #C0392B !important;
+        background-color: #C0392B !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        padding: 6px 14px !important; font-size: 12px !important; font-weight: 700 !important; border-radius: 4px !important; border: none !important;
       }
-      .print-header-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 8px;
-      }
-      .print-header-brand {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 18px;
-        font-weight: 700;
-        color: #111111;
-      }
-      .print-header-date {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        color: #888888;
-      }
-      .print-header-rule {
-        height: 2px;
-        background: #3FB950;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
+      .verdict-badge.v-clear   { background: #1E7E34 !important; background-color: #1E7E34 !important; color: #FFFFFF !important; padding: 6px 14px !important; font-size: 12px !important; font-weight: 700 !important; border-radius: 4px !important; border: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+      .verdict-badge.v-caution { background: #856404 !important; background-color: #856404 !important; color: #FFFFFF !important; padding: 6px 14px !important; font-size: 12px !important; font-weight: 700 !important; border-radius: 4px !important; border: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
 
-      /* forced color on verdict banner strip */
-      .verdict-banner.v-recall  { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(248,81,73,0.12) !important; }
-      .verdict-banner.v-caution { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(210,153,34,0.12) !important; }
-      .verdict-banner.v-clear   { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: rgba(63,185,80,0.12) !important; }
+      /* ── CONFIDENCE ── */
+      .confidence { font-family: 'Space Grotesk', sans-serif !important; font-size: 12px !important; color: #444444 !important; font-weight: 500 !important; }
 
-      /* forced color on verdict badge */
-      .verdict-badge.v-recall  { background-color: rgba(248,81,73,0.12) !important; color: #F85149 !important; border: 1px solid rgba(248,81,73,0.22) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .verdict-badge.v-caution { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(210,153,34,0.18) !important; color: #D29922 !important; border: 1px solid rgba(210,153,34,0.4) !important; }
-      .verdict-badge.v-clear   { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(63,185,80,0.18) !important; color: #3FB950 !important; border: 1px solid rgba(63,185,80,0.4) !important; }
+      /* ── VERDICT HEADLINE ── */
+      .verdict-headline { font-size: 16px !important; font-weight: 700 !important; color: #000000 !important; margin-bottom: 16px !important; }
 
-      /* forced color on action step number circles */
-      .v-recall .action-steps li::before { background-color: rgba(248,81,73,0.12) !important; color: #F85149 !important; border: 1px solid rgba(248,81,73,0.25) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .v-caution-card .action-steps li::before { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: rgba(210,153,34,0.18) !important; color: #D29922 !important; border: 1px solid rgba(210,153,34,0.4) !important; }
+      /* ── SECTION LABELS ── */
+      .section-label { font-size: 9px !important; font-weight: 700 !important; color: #000000 !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; border-bottom: 1px solid #CCCCCC !important; padding-bottom: 4px !important; margin-bottom: 8px !important; }
 
-      /* print typography */
-      .verdict-headline { font-size: 13px !important; }
-      .result-body, .detail-item-value { font-size: 10px !important; }
-      .action-steps li { font-size: 9px !important; }
-      .section-label, .detail-item-label { font-size: 9px !important; }
-      .detail-item { font-size: 9px !important; }
-      .disclaimer { font-size: 9px !important; color: #888888 !important; border-top: 1px solid #ddd !important; }
+      /* ── DETAIL GRID ── */
+      .detail-grid { gap: 8px !important; margin-bottom: 12px !important; align-items: start !important; }
+      .detail-item { border: 1px solid #DDDDDD !important; padding: 8px 10px !important; border-radius: 4px !important; background: transparent !important; }
+      .detail-item-label { font-size: 8px !important; font-weight: 700 !important; color: #666666 !important; text-transform: uppercase !important; margin-bottom: 3px !important; }
+      .detail-item-value { font-size: 11px !important; color: #000000 !important; font-weight: 500 !important; }
 
-      /* collapse all section spacing */
-      .verdict-banner { margin-bottom: 8px !important; }
-      .verdict-headline { margin-bottom: 8px !important; }
-      .checked-sources  { margin-bottom: 8px !important; }
-      .detail-grid      { gap: 6px !important; margin-bottom: 8px !important; }
-      .detail-item      { padding: 6px 8px !important; }
-      .action-steps     { margin-bottom: 8px !important; }
-      .action-steps li  { padding: 5px 0 !important; }
-      .section-label    { margin-bottom: 4px !important; }
-      .print-header     { margin-bottom: 12px !important; }
+      /* ── ACTION STEPS ── */
+      .action-steps { margin-bottom: 12px !important; }
+      .action-steps li { font-size: 11px !important; color: #111111 !important; line-height: 1.6 !important; padding: 6px 0 !important; border-bottom: 1px solid #EEEEEE !important; }
+      .action-steps li:last-child { border-bottom: none !important; }
+      .v-recall     .action-steps li::before { background-color: #C0392B !important; color: #FFFFFF !important; border: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .v-caution-card .action-steps li::before { background-color: #856404 !important; color: #FFFFFF !important; border: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-      /* print footer — fixed repeats on every page */
+      /* ── WHAT TO DO NEXT BOX ── */
+      .print-next-steps { display: block !important; border: 2px solid #DDDDDD !important; border-radius: 4px !important; padding: 12px !important; margin-bottom: 10px !important; font-family: 'JetBrains Mono', monospace !important; font-size: 10px !important; color: #444444 !important; line-height: 1.6 !important; }
+
+      /* ── DISCLAIMER ── */
+      .disclaimer { font-size: 9px !important; color: #666666 !important; border-top: 1px solid #DDDDDD !important; padding-top: 8px !important; margin-top: 12px !important; margin-bottom: 0 !important; }
+
+      /* ── FOOTER ── */
       body::after {
         content: 'Generated by Flagged \00B7 flagged-dun.vercel.app \00B7 Always verify directly at CPSC.gov and FDA.gov \00B7 Not legal advice';
         display: block;
@@ -709,7 +703,7 @@
         bottom: 0; left: 0; right: 0;
         font-family: 'JetBrains Mono', monospace;
         font-size: 9px;
-        color: #999999;
+        color: #888888;
         text-align: center;
         padding-bottom: 6mm;
       }
@@ -1271,6 +1265,7 @@ function renderResult({ verdict, query, name }) {
           <button class="btn-primary" id="wl-btn">+ Add to watchlist</button>
         </div>
       </div>
+      <div class="print-next-steps">This report was generated by Flagged on ${printDate}. Share this document with your compliance team, supplier, and marketplace account manager. Verify all details directly at CPSC.gov and FDA.gov before taking action.</div>
       <p class="disclaimer">Flagged monitors public government databases. Always verify directly at CPSC.gov and FDA.gov. Not legal advice.</p>
     </div>
   </div>

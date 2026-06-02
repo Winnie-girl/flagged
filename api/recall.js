@@ -8,7 +8,7 @@ Decision rules:
 - Return "recall_found" if EITHER the live database data OR your training knowledge confirms a real recall for this product with high confidence. Do not downgrade to "caution" simply because a database was unavailable or returned no results — if you know about a well-documented recall, say so.
 - Return "caution" only when you have genuine uncertainty: partial matches, possible brand aliases, or conflicting signals where you cannot confidently confirm or rule out a recall.
 - Return "clear" when both live data and your training knowledge find no recall.
-- When returning "recall_found" based on training knowledge (not live data), populate recall_details and official_url from what you know. Include the real CPSC.gov or FDA.gov recall page URL if you know it.
+- When returning "recall_found" based on training knowledge (not live data), populate recall_details from what you know. For official_url, always return a CPSC search URL in this exact format: https://www.cpsc.gov/Recalls?q={product+name+with+plus+signs+between+words} — for example for Peloton Tread return https://www.cpsc.gov/Recalls?q=Peloton+Tread. For FDA recalls always return: https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts — never generate a specific page URL.
 - Account for name variations, model numbers, and brand aliases.
 - Missing a real recall is worse than a false positive.
 
